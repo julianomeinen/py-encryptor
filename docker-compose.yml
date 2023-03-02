@@ -1,0 +1,12 @@
+version: '3'
+
+name: python
+
+services:
+  python:
+    build:
+      context: ./
+    volumes:
+      - ./app:/app
+    ports:
+      - 5000:5000
