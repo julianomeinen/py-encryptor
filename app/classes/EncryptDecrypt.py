@@ -17,12 +17,18 @@ class EncryptDecrypt:
         self.mnemo = Mnemonic("english")
 
     def set_key(self, key) -> str:
-        self._KEY = key   
+        self._KEY = key
+    
+    def get_key(self) -> str:
+        return self._KEY
 
     def get_key_by_twenty_four_words(self, twenty_four_words) -> str:
-        #twenty_four_words = "base depart together agent relief vivid slide smile amount tent orient magic fatigue metal steak marriage country today grain cruel bicycle tomato problem real"
         entropy = self.mnemo.to_seed(twenty_four_words)
         return entropy.hex()
+    
+    def set_key_by_twenty_four_words(self, twenty_four_words) -> str:
+        entropy = self.mnemo.to_seed(twenty_four_words)
+        return self.set_key(entropy.hex())
 
     def generate_twenty_four_words(self, passphrase=""):
         words = self.mnemo.generate(strength=256)
@@ -120,8 +126,8 @@ class EncryptDecrypt:
         encrypted_file_content = encrypted_file.read()
         encrypted_file.close()
 
-        destination_file = open(destination, "w+b")
         decrypted_file_content = self.decrypt_file(encrypted_file_content)
+        destination_file = open(destination, "w+b")
         destination_file.write(decrypted_file_content)
         destination_file.close()
 
