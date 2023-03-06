@@ -91,6 +91,9 @@ def test_encrypt_files_in_dir():
             name = file[file.rfind("/"):]
             encryptDecryp.encrypt_and_save_file(file, "files/tests/encrypted" + name + "-encrypted")
             print(file + " was encrypted as files/tests/encrypted" + name + "-encrypted")
+    if len(glob.glob("files/tests/encrypted/*")) == 0:
+        print('No files in files/tests/')
+    return True
 
 def test_decrypt_files_in_dir():
     encryptDecryp = EncryptDecrypt()
@@ -99,6 +102,9 @@ def test_decrypt_files_in_dir():
             name = file[file.rfind("/"):-10]
             encryptDecryp.decrypt_and_save_file(file, "files/tests/decrypted" + name)
             print(file + " was decrypted as files/tests/decrypted" + name)
+    if len(glob.glob("files/tests/encrypted/*")) == 0:
+        print('No files in files/tests/encrypted/')
+    return True
 
 def tests_if_the_contents_of_the_decrypted_files_are_the_same_as_the_original_files():
     encryptDecryp = EncryptDecrypt()
@@ -107,3 +113,22 @@ def tests_if_the_contents_of_the_decrypted_files_are_the_same_as_the_original_fi
             name = file[file.rfind("/"):]
             encryptDecryp.check_file_content(file, "files/tests/decrypted" + name)
             print("The content of " + file + " is the same as the files/tests/decrypted" + name + "file.")
+    if len(glob.glob("files/tests/decrypted/*")) == 0:
+        print('No files in files/tests/decrypted/')
+    return True
+
+def tests_twenty_four_words():
+    encryptDecryp = EncryptDecrypt()
+    bip39 = encryptDecryp.generate_twenty_four_words()
+    assert bip39['seed'] != None
+    seed = encryptDecryp.get_key_by_twenty_four_words(bip39['words'])
+    assert bip39['seed'] == seed
+    return True
+
+def tests_get_key_by_twenty_four_words():
+    encryptDecryp = EncryptDecrypt()
+    words = "satoshi category absorb fringe select pull found flock patient job naive never giggle reopen method clap task cushion copy awesome palm girl flee suspect"
+    key = encryptDecryp.get_key_by_twenty_four_words(words)
+    assert key == "335c47f1286ef8d5e711de66f4a1aefcd306098976278068965311df356a1cce44e298efbba37b294beb23cf143582ccbf307f96c50e24634a71ae57d4749754"    
+    return True
+    

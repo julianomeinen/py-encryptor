@@ -6,27 +6,38 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 import base64
 import hmac
-
-_BLOCK_SIZE = 16
-_KEY = "new test 110"
-_INFO = "AuthorizationKey"
+from mnemonic import Mnemonic
 
 class EncryptDecrypt:
     
-    def get_key() -> str:
-        return _KEY
-    
-    def get_block_size() -> str:
-        return _BLOCK_SIZE
-    
-    def get_info() -> str:
-        return _INFO
+    def __init__(self) -> None:
+        self._BLOCK_SIZE = 16
+        self._KEY = "new test 110"
+        self._INFO = "AuthorizationKey"
+        self.mnemo = Mnemonic("english")
+
+    def set_key(self, key) -> str:
+        self._KEY = key   
+
+    def get_key_by_twenty_four_words(self, twenty_four_words) -> str:
+        #twenty_four_words = "base depart together agent relief vivid slide smile amount tent orient magic fatigue metal steak marriage country today grain cruel bicycle tomato problem real"
+        entropy = self.mnemo.to_seed(twenty_four_words)
+        return entropy.hex()
+
+    def generate_twenty_four_words(self, passphrase=""):
+        words = self.mnemo.generate(strength=256)
+        seed = self.mnemo.to_seed(words, passphrase)
+        entropy = self.mnemo.to_entropy(words)
+        return {'words': words, 'seed': seed.hex(), 'entropy': entropy.hex()}
+
+    def get_block_size_key(self) -> str:
+        return self._BLOCK_SIZE
 
     def encrypt_str(self, raw:str) -> bytes:
         
-        keySalt = self.generate_random_key(EncryptDecrypt.get_block_size())
-        key = self.hash_hkdf(EncryptDecrypt.get_key(), keySalt, EncryptDecrypt.get_info(), EncryptDecrypt.get_block_size())
-        iv = self.generate_random_key(EncryptDecrypt.get_block_size())       
+        keySalt = self.generate_random_key(self._BLOCK_SIZE)
+        key = self.hash_hkdf(self._KEY, keySalt, self._INFO, self._BLOCK_SIZE)
+        iv = self.generate_random_key(self._BLOCK_SIZE)       
 
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv), default_backend())
         encryptor = cipher.encryptor()
@@ -45,11 +56,11 @@ class EncryptDecrypt:
     def decrypt_str(self, enc:bytes) -> str:
         
         enc = base64.b64decode(enc)
-        iv = enc[0:EncryptDecrypt.get_block_size()]                
-        keySalt = enc[0:EncryptDecrypt.get_block_size()]
-        enc = enc[EncryptDecrypt.get_block_size():]       
+        iv = enc[0:self._BLOCK_SIZE]                
+        keySalt = enc[0:self._BLOCK_SIZE]
+        enc = enc[self._BLOCK_SIZE:]       
 
-        key = self.hash_hkdf(EncryptDecrypt.get_key(), keySalt, EncryptDecrypt.get_info(), EncryptDecrypt.get_block_size())
+        key = self.hash_hkdf(self._KEY, keySalt, self._INFO, self._BLOCK_SIZE)
 
         test = hmac.new(key, enc, hashlib.sha256).hexdigest()
 
@@ -65,8 +76,8 @@ class EncryptDecrypt:
         if bytes(calculatedHash, 'latin-1') != hash:
             raise Exception("Invalid Hash") 
 
-        iv = pureData[0:EncryptDecrypt.get_block_size()]
-        encrypted = pureData[EncryptDecrypt.get_block_size():]
+        iv = pureData[0:self._BLOCK_SIZE]
+        encrypted = pureData[self._BLOCK_SIZE:]
 
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv), default_backend())
         decryptor = cipher.decryptor()
@@ -75,7 +86,7 @@ class EncryptDecrypt:
         return _unpad(raw)
     
     def generate_random_key(self, keySize) -> str:
-        return (base64.b64encode(os.urandom(int(keySize))))[0:EncryptDecrypt.get_block_size()]
+        return (base64.b64encode(os.urandom(int(keySize))))[0:self._BLOCK_SIZE]
     
     def hash_hkdf(self, inputKey, salt, info, length) -> str:
         hkdf = HKDF(
@@ -130,7 +141,8 @@ class EncryptDecrypt:
             return True
 
 def _pad(s:str) -> str:
-    padding = (EncryptDecrypt.get_block_size() - (len(s) % EncryptDecrypt.get_block_size()))
+    encrypt = EncryptDecrypt()
+    padding = (encrypt.get_block_size_key() - (len(s) % encrypt.get_block_size_key()))
     return s + padding * chr(padding)
 
 def _unpad(s:str) -> str:
